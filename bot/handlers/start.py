@@ -1,4 +1,4 @@
-"""Старт, справка, отмена ввода и текст для незнакомцев."""
+"""Start, help, cancel and text for unknown users."""
 
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart, StateFilter

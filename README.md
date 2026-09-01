@@ -1,115 +1,89 @@
-# Meal Tracker — TG-бот записи школьного питания
+# Meal Tracker — Telegram Bot for School Lunch Management
 
-Бот для дежурных по классу, которые каждый день собирают «кто будет есть».
-Утром в заданное время приходит список класса кнопками, ты протыкаешь —
-в конце месяца бот сам собирает Excel ровно в формате для классрука.
+A Telegram bot that helps class monitors manage daily school lunch sign-ups. Every morning it sends an inline-keyboard board per class; at month's end it generates a formatted Excel report ready to forward to the class teacher.
 
-## Что умеет
+## Features
 
-- **Утренняя доска (пн–пт, по Минску)** — на каждого ученика ряд кнопок:
-  `[Имя Ф ❌] [🍜] [✅]`. Имя переезжает на нажатую кнопку, повторный клик
-  сбрасывает на ❌. Снизу `[🔄 Рестарт] [Подтвердить ✅]`, сверху
-  `[❌ НЕ ЗАПИСЫВАТЬ ❌]` — праздник/нет в школе, день целиком пропускается.
-- **Статусы** — ✅ = обед (в Excel «О»), 🍜 = обед с первым («О(1)»),
-  ❌ = не ест / нет в школе (пустая клетка).
-- **/management** — время рассылки, авто-пропуск по дням недели (ученик
-  зажат на ❌), ученики (добавить/порядок/переименовать/удалить),
-  авто-Excel (день + время), отчёт сразу за любой месяц, гайды.
-- **Авто-Excel** — в конце месяца бот присылает xlsx с колонками пн–пт,
-  строками класса и итогами «Без первого / С первым». Пересылаешь классруку.
-- **Текст для листка** — после «Подтвердить» бот присылает агрегат дня
-  отдельным сообщением: `11-Б / Обедов с I : N / Обедов без I : N` —
-  переписываешь классруку бездумно; кнопка «📋 Текст для листка» под итогом
-  пересоздаёт текст (в т.ч. после исправления задним числом).
-- **Посмотреть записи** — /management → календарь месяца (пн–вс, как
-  настенный календарь), клик по дню показывает, кто как записан; оттуда же
-  можно открыть доску за любой прошлый день и исправить.
-- **UX-мелочи** — меню команд Telegram подсказывает команды по роли
-  (set_my_commands), в меню виден статус сегодняшней записи и есть кнопка
-  «Доска на сегодня», «Рестарт» и подтверждение пустого дня срабатывают со
-  второго нажатия, нового админа бот приветствует сам.
-- **Школы разделены** — `/add 123456789 11-Б Гимназия`; на один класс можно
-  добавить нескольких админов (запасной).
-- **Незнакомцам** — бот представляется и отправляет к @egraich.
+- **Morning board (Mon–Fri)** — one row per student with `[Name ❌] [🍜] [✅]` buttons; name migrates to the pressed button.
+- **Statuses** — ✅ = lunch (`O` in Excel), 🍜 = lunch with soup (`O1`), ❌ = absent (empty cell).
+- **`/management`** — morning send time, weekday auto-skip, student list (add/reorder/rename/delete), auto-Excel settings, on-demand monthly report, help.
+- **Auto-Excel** — sends a `.xlsx` file per class at the configured day/time; format matches a standard class register.
+- **Day summary** — after confirming a board, the bot posts a plain-text aggregate for the class teacher.
+- **History** — calendar view of any past month; tap a day to reopen and edit it.
+- **School isolation** — superadmins manage multiple schools/classes; class admins see only their own board.
+- **Soft-delete** — removed students disappear from boards but stay in reports for months they attended.
 
-## Команды
+## Bot Commands
 
-| Команда | Кто | Что |
+| Command | Who | What |
 |---|---|---|
-| `/start` | все | приветствие / промо |
-| `/today` | админ | открыть/переоткрыть доску на сегодня |
-| `/management` | админ | все настройки |
-| `/cancel` | админ | отменить ввод |
-| `/add` | суперадмин | добавить админа: выбор школы кнопками |
-| `/add <id> <класс> <школа>` | суперадмин | добавить одной строкой |
-| `/schools` | суперадмин | школы, классы и админы |
-| `/del <id>` | суперадмин | убрать админа |
-| `/admins` | суперадмин | список админов |
+| `/start` | all | Greeting and help |
+| `/today` | admin | Open/reopen today's board |
+| `/management` | admin | All settings |
+| `/cancel` | admin | Cancel current input |
+| `/add` | superadmin | Add admin: school picker |
+| `/add <id> <class> <school>` | superadmin | Add admin: one-liner |
+| `/schools` | superadmin | Schools, classes, admin counts |
+| `/del <id>` | superadmin | Remove admin |
+| `/admins` | superadmin | Admin list |
 
-## Быстрый старт (локально)
+## Quick Start (Local)
 
 ```bash
 python -m venv .venv
 .venv/Scripts/pip install -r requirements.txt   # Windows
 # Linux/Mac: .venv/bin/pip install -r requirements.txt
-cp .env.example .env   # вписать BOT_TOKEN и SUPERADMIN_IDS
+cp .env.example .env   # fill BOT_TOKEN, SUPERADMIN_IDS, DATABASE_URL
 .venv/Scripts/python -m bot
 ```
 
-## VPS (Docker)
+## Docker
 
 ```bash
-scp -r проект на сервер
-cd Launch_tracker
-nano .env                # BOT_TOKEN, SUPERADMIN_IDS, TZ=Europe/Minsk
+cp .env.example .env   # fill BOT_TOKEN, SUPERADMIN_IDS, DATABASE_URL
 docker compose up -d --build
 docker compose logs -f
 ```
 
-База лежит в `./data/meal_tracker.db` (volume), переживает пересборку
-контейнера. Бот жрёт ~60–100 МБ RAM.
+The bot expects a Postgres database reachable at `DATABASE_URL`. The bot container must be on the same Docker network as the Postgres container (e.g. `postgres_net`).
 
-## Структура
+## Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `BOT_TOKEN` | — | Telegram bot token from @BotFather |
+| `SUPERADMIN_IDS` | — | Comma-separated Telegram user IDs (superadmins) |
+| `TZ` | `Europe/Minsk` | Timezone for all scheduling |
+| `DATABASE_URL` | — | Full Postgres connection string |
+| `DB_POOL_MIN` | `1` | Minimum pool connections |
+| `DB_POOL_MAX` | `5` | Maximum pool connections |
+
+## Project Structure
 
 ```
 bot/
-├── __main__.py        # сборка диспетчера + планировщик
-├── config.py          # .env, TZ, логирование
-├── db/                # aiosqlite: core + репозитории
-├── handlers/          # start, superadmin, board (доска), management
-└── services/
-    ├── board.py       # чистая логика клавиатуры доски
-    ├── excel.py       # генерация месячного xlsx
-    └── scheduler.py   # тик каждую минуту: доски + авто-Excel
-tests/                 # pytest: доска + excel
+├── __main__.py        # entry point, dispatcher, scheduler
+├── config.py          # .env, TZ, logging
+├── db/                # asyncpg repositories
+├── handlers/          # aiogram routers (start, board, management, etc.)
+└── services/          # board logic, Excel, scheduler, season
+tests/                 # pytest unit tests (no DB, no network)
+scripts/backup.sh      # pg_dump backup with 7-day rotation
+docker-compose.yml     # bot container (uses external Postgres)
+Dockerfile
+LICENSE
 ```
 
-## Нюансы
+## Season
 
-- Время всегда **Europe/Minsk** — VPS может стоять в любой зоне, рассылка
-  считается по Минску.
-- **Учебный сезон 1.09–31.05**: летом автоматика (утренние доски, авто-Excel)
-  спит, `/today` вежливо отказывает; записи прошлых учебных месяцев можно
-  править и летом, отчёты вручную тоже работают. Суперадмин может открывать
-  доски и летом — для тестов и демо.
-- Состояние доски хранится в самой клавиатуре сообщения — рестарт бота
-  посреди заполнения ничего не ломает.
-- «Удаление» ученика мягкое: из доски пропадает, но остаётся в отчётах за
-  месяцы, где успел поесть.
-- В экране «Порядок» помещается до ~32 учеников (лимит Telegram в 100 кнопок).
-- Исправить подтверждённый день: `/today` или /management → Посмотреть записи.
+The bot operates only during the school year (September 1 – May 31). Automatic boards and auto-Excel are paused in summer; editing past months and on-demand reports still work.
 
-## Безопасность
-
-- Токен и суперадмины — только в `.env`, в git не попадает (`.gitignore`).
-- Все запросы к БД параметризованы; имена полей в `UPDATE` — из белого списка.
-- Кнопки доски проверяют, что нажимающий — админ **того же класса**, что и
-  владелец доски (через сессию сообщения); чужие классы отсеиваются.
-- Суперадмин-команды, кнопки и FSM-вводы каждый раз сверяются с `SUPERADMIN_IDS`.
-- На VPS — read-only deploy keys и `chmod 600 .env` (см. DEPLOY.md).
-
-## Тесты
+## Tests
 
 ```bash
 .venv/Scripts/python -m pytest -q
 ```
+
+Tests cover board keyboard roundtrip, history calendar, Excel weekday layout, season boundaries, and sheet text format — all pure unit tests without database or network access.
+
+Made by [egraich](https://egraich.dev) <3

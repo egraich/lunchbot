@@ -1,1 +1,1 @@
-"""Meal Tracker — TG-бот записи школьного питания (aiogram 3 + aiosqlite)."""
+"""Meal Tracker — Telegram bot for school lunch sign-ups (aiogram 3 + asyncpg)."""

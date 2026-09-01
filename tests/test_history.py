@@ -1,4 +1,4 @@
-"""Тесты фиксов: время в callback_data без двоеточия, сетка календаря."""
+"""Unit tests for calendar grid and callback data packing."""
 
 import calendar
 
@@ -17,10 +17,8 @@ def test_meal_cb_packs_with_dash_date():
 
 
 def test_calendar_grid_monday_first_sunday_last():
-    # сентябрь 2026: 1-е — вторник, понедельник должен уехать в паддинг
     weeks = calendar.monthcalendar(2026, 9)
     assert weeks[0] == [0, 1, 2, 3, 4, 5, 6]
     assert all(len(week) == 7 for week in weeks)
-    # воскресенье всегда в крайнем правом столбце
     assert weeks[0][6] == 6
     assert weeks[1][6] == 13

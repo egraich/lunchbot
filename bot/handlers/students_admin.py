@@ -1,4 +1,4 @@
-"""Ученики класса: добавить, порядок, переименовать, удалить."""
+"""Students: add, reorder, rename, delete."""
 
 import logging
 
@@ -37,8 +37,6 @@ async def cb_students(cb: CallbackQuery) -> None:
     await cb.answer()
 
 
-# ---------- добавить ----------
-
 @router.callback_query(MCB.filter(F.action == "st_add"))
 async def cb_st_add(cb: CallbackQuery, state: FSMContext) -> None:
     admin = await guard(cb)
@@ -68,7 +66,6 @@ async def on_add_student(message: Message, state: FSMContext) -> None:
     if not await students.add(admin.school_id, admin.class_name, name):
         return await message.answer(f"«{name}» уже есть в списке 🤨")
 
-    # чат не засоряем: ввод юзера удаляем, статус редактируем в одном сообщении
     data = await state.get_data()
     added = data.get("added", []) + [name]
     await state.update_data(added=added)
@@ -101,11 +98,9 @@ async def cb_st_add_done(cb: CallbackQuery, state: FSMContext) -> None:
     await cb.answer("Готово")
 
 
-# ---------- порядок ----------
-
 async def order_screen(admin: Admin) -> tuple[str, InlineKeyboardMarkup]:
     sts = await students.list_active(admin.school_id, admin.class_name)
-    if len(sts) > 32:  # 32 * 3 кнопки + «Назад» — потолок Telegram в 100 кнопок
+    if len(sts) > 32:
         return (
             "😕 Учеников больше 32 — Telegram не даст столько кнопок в одном сообщении.",
             kb([back_row("students")]),
@@ -139,8 +134,6 @@ async def cb_st_move(cb: CallbackQuery, callback_data: MCB) -> None:
     await edit(cb, text, markup)
     await cb.answer()
 
-
-# ---------- переименовать ----------
 
 @router.callback_query(MCB.filter(F.action == "st_rename"))
 async def cb_st_rename(cb: CallbackQuery) -> None:
@@ -183,8 +176,6 @@ async def on_rename(message: Message, state: FSMContext) -> None:
     text, markup = await students_screen(admin)
     await message.answer(f"✅ Теперь это <b>{name}</b>.\n\n{text}", reply_markup=markup)
 
-
-# ---------- удалить ----------
 
 @router.callback_query(MCB.filter(F.action == "st_delete"))
 async def cb_st_delete(cb: CallbackQuery) -> None:

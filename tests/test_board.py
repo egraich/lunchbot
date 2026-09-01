@@ -1,4 +1,4 @@
-"""Тесты чистой логики доски: миграция имени, сброс, парсинг клавиатуры."""
+"""Unit tests for the board logic: name migration, reset, keyboard parsing."""
 
 from bot.services.board import (
     STATUS_O,
@@ -16,8 +16,8 @@ DATE = "2026-09-01"
 def _rows():
     return build_rows(
         [(1, "Климович И"), (2, "Старик Ф"), (3, "Панько Н")],
-        {2: STATUS_O},  # Старик уже записан на обед
-        {3},            # Панько — авто-пропуск
+        {2: STATUS_O},
+        {3},
     )
 
 
@@ -74,12 +74,10 @@ def test_arm_restart_keeps_selections():
     rows = toggle(_rows(), 1, "O")
     kb = build_keyboard(DATE, rows, arm="restart")
     assert [b.text for b in kb.inline_keyboard[-1]] == ["❓ Точно сбросить?", "Подтвердить ✅"]
-    # ряды учеников не перерисовались — отметки на месте
     assert parse_keyboard(kb)[0].status == STATUS_O
 
 
 def test_arm_confirm_empty():
     kb = build_keyboard(DATE, _rows(), arm="confirm")
     assert kb.inline_keyboard[-1][1].text == "✅ Точно записать пустым?"
-    # ряды учеников не тронуты
     assert parse_keyboard(kb)[1].status == STATUS_O

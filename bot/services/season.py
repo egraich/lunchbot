@@ -1,14 +1,14 @@
-"""Учебный сезон: 1 сентября — 31 мая. Летом автоматика спит."""
+"""School season: September 1 – May 31. Automations sleep in summer."""
 
 from datetime import date
 
 
 class SeasonClosed(Exception):
-    """Попытка открыть доску вне учебного сезона (и не суперадмин)."""
+    """Raised when trying to open a board outside the school season (and not a superadmin)."""
 
 
 def is_school_season(d: date) -> bool:
-    """Сентябрь–декабрь и январь–май — сезон, июнь–август — каникулы."""
+    """Return True for Sep–Dec and Jan–May (school season), False for Jun–Aug (vacation)."""
     return d.month >= 9 or d.month <= 5
 
 

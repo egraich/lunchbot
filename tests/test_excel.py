@@ -1,4 +1,4 @@
-"""Тесты Excel-отчёта: формат как на фото (О / О(1) / пусто + суммы)."""
+"""Unit tests for the Excel report: format O/O(1)/empty + sums."""
 
 from openpyxl import load_workbook
 
@@ -7,12 +7,11 @@ from bot.services.excel import generate, month_weekdays
 
 def test_month_weekdays_excludes_weekends():
     days = month_weekdays(2025, 12)
-    # декабрь 2025: 1-е — понедельник, как на фото с таблицей
     assert [d.day for d in days[:5]] == [1, 2, 3, 4, 5]
     assert all(d.weekday() < 5 for d in days)
-    assert 6 not in [d.day for d in days]  # суббота
-    assert 7 not in [d.day for d in days]  # воскресенье
-    assert 8 in [d.day for d in days]      # понедельник
+    assert 6 not in [d.day for d in days]
+    assert 7 not in [d.day for d in days]
+    assert 8 in [d.day for d in days]
 
 
 def test_report_layout(tmp_path):
@@ -31,15 +30,13 @@ def test_report_layout(tmp_path):
     assert header[0] == 1 and 6 not in header and 7 not in header and 8 in header
 
     assert ws.cell(2, 1).value == "Старик Ф"
-    assert ws.cell(2, 2).value == "О"       # обед без первого
-    assert ws.cell(3, 2).value == "О(1)"    # обед с первым
-    assert ws.cell(2, 4).value is None      # не ест — пустая клетка
+    assert ws.cell(2, 2).value == "О"
+    assert ws.cell(3, 2).value == "О(1)"
+    assert ws.cell(2, 4).value is None
 
-    # итоговые строки: 1 декабря — 1 без первого, 1 с первым
     summary = 2 + len(students)
     assert ws.cell(summary, 1).value == "Без первого :"
     assert ws.cell(summary, 2).value == 1
     assert ws.cell(summary + 1, 1).value == "С первым :"
     assert ws.cell(summary + 1, 2).value == 1
-    # 3 декабря никто не ел
     assert ws.cell(summary, 4).value == 0

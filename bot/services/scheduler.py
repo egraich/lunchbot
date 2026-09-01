@@ -1,4 +1,4 @@
-"""Тик каждую минуту (по Минску): утренние доски + авто-Excel."""
+"""Every-minute tick: morning boards and auto-Excel (in config TZ)."""
 
 import calendar
 import logging
@@ -19,8 +19,8 @@ log = logging.getLogger(__name__)
 async def tick(bot: Bot) -> None:
     now = datetime.now(config.TZ)
     if not season.is_school_season(now.date()):
-        return  # каникулы: ни досок, ни авто-Excel
-    if now.weekday() >= 5:  # сб/вс — тишина
+        return
+    if now.weekday() >= 5:
         return
     today = now.date().isoformat()
     for admin in await admins.all():
@@ -31,7 +31,6 @@ async def tick(bot: Bot) -> None:
                 and not await sessions.get(admin.telegram_id, today)
                 and await students.count_active(admin.school_id, admin.class_name)
             ):
-                # если бот был выключен в назначенное время — доска придёт при старте
                 await board.send_board(bot, admin, now.date())
             if (
                 st.excel_enabled
@@ -52,7 +51,6 @@ def _parse_hm(value: str) -> time:
 def _is_report_day(now: datetime, excel_day: str) -> bool:
     if excel_day == "last":
         return (now + timedelta(days=1)).month != now.month
-    # в коротких месяцах нет 29–31 числа — тогда шлём в последний день
     last_day = calendar.monthrange(now.year, now.month)[1]
     return now.day == min(int(excel_day), last_day)
 

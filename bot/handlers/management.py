@@ -1,4 +1,4 @@
-"""/management: меню, время рассылки, авто-пропуск, авто-Excel, отчёт, гайды."""
+"""/management: menu, send time, auto-skip, auto-Excel, report, help."""
 
 import logging
 from datetime import datetime
@@ -32,8 +32,6 @@ from bot.services.season import VACATION_TEXT, SeasonClosed, is_school_season
 router = Router(name="management")
 log = logging.getLogger(__name__)
 
-
-# ---------- меню ----------
 
 async def _today_line(admin: Admin) -> str:
     d = board.today()
@@ -123,8 +121,6 @@ async def cb_noop(cb: CallbackQuery) -> None:
     await cb.answer()
 
 
-# ---------- время рассылки ----------
-
 @router.callback_query(MCB.filter(F.action == "time"))
 async def cb_time(cb: CallbackQuery) -> None:
     admin = await guard(cb)
@@ -178,8 +174,6 @@ async def on_custom_time(message: Message, state: FSMContext) -> None:
     text, markup = await menu_screen(admin)
     await message.answer(f"✅ Время сохранено: <b>{value}</b>\n\n{text}", reply_markup=markup)
 
-
-# ---------- авто-пропуск ----------
 
 async def skip_day_screen(admin: Admin, weekday: int) -> tuple[str, InlineKeyboardMarkup]:
     sts = await students.list_active(admin.school_id, admin.class_name)
@@ -235,8 +229,6 @@ async def cb_skip_toggle(cb: CallbackQuery, callback_data: MCB) -> None:
     await edit(cb, text, markup)
     await cb.answer("🚫 авто-пропуск" if now_locked else "▫️ убрано")
 
-
-# ---------- авто-Excel ----------
 
 async def excel_screen(admin: Admin) -> tuple[str, InlineKeyboardMarkup]:
     st = await settings.get(admin.telegram_id)
@@ -362,8 +354,6 @@ async def on_excel_time(message: Message, state: FSMContext) -> None:
     await message.answer(f"✅ Время отчёта: <b>{value}</b>\n\n{text}", reply_markup=markup)
 
 
-# ---------- отчёт сейчас ----------
-
 @router.callback_query(MCB.filter(F.action == "report"))
 async def cb_report(cb: CallbackQuery) -> None:
     admin = await guard(cb)
@@ -398,8 +388,6 @@ async def cb_report_gen(cb: CallbackQuery, callback_data: MCB) -> None:
         path.unlink(missing_ok=True)
     await cb.answer("Готово 📊")
 
-
-# ---------- гайды ----------
 
 GUIDE = (
     "❓ <b>Гайд</b>\n\n"

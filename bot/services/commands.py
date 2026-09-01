@@ -1,8 +1,4 @@
-"""Подсказки команд в меню Telegram (set_my_commands) по скоупам.
-
-Обычным юзерам — минимум, админам классов — доска и настройки,
-суперадминам ещё и управление админами.
-"""
+"""Telegram command menu hints (set_my_commands) scoped by role."""
 
 import logging
 
@@ -32,6 +28,7 @@ SUPER = [
 
 
 async def setup_commands(bot: Bot) -> None:
+    """Register command menus: BASE for everyone, ADMIN for class admins, SUPER for superadmins."""
     try:
         await bot.set_my_commands(BASE, scope=BotCommandScopeAllPrivateChats())
     except Exception:
@@ -42,7 +39,7 @@ async def setup_commands(bot: Bot) -> None:
                 BASE + ADMIN, scope=BotCommandScopeChat(chat_id=admin.telegram_id)
             )
         except Exception:
-            pass  # админ ещё не жмал /start — скоуп не ставится, это норма
+            pass
     for super_id in config.SUPERADMIN_IDS:
         try:
             await bot.set_my_commands(

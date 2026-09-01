@@ -1,4 +1,4 @@
-"""Точка входа: инициализация БД, диспетчер, роутеры, планировщик, polling."""
+"""Entry point: DB initialisation, dispatcher, router setup, scheduler, polling."""
 
 import asyncio
 import logging
@@ -28,8 +28,11 @@ log = logging.getLogger(__name__)
 async def main() -> None:
     config.setup_logging()
     if not config.BOT_TOKEN:
-        raise ValueError("BOT_TOKEN пуст — заполни .env (см. .env.example)")
+        raise ValueError("BOT_TOKEN is not set — fill .env (see .env.example)")
+    if not config.DATABASE_URL:
+        raise ValueError("DATABASE_URL is not set — fill .env (see .env.example)")
     await core.init_db()
+    log.info("connected to Postgres, pool initialised")
 
     bot = Bot(config.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher()
@@ -55,11 +58,11 @@ async def main() -> None:
                 await dp.start_polling(bot)
                 break
             except TelegramConflictError:
-                # второй экземпляр бота где-то поллит — не падаем, ждём его
-                log.warning("409: другой экземпляр бота уже запущен, повтор через 15 с")
+                log.warning("409: another bot instance is polling, retry in 15s")
                 await asyncio.sleep(15)
     finally:
         scheduler.shutdown(wait=False)
+        await core.close_pool()
         await bot.session.close()
 
 

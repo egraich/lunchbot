@@ -1,8 +1,8 @@
-"""Чистая логика утренней доски: ряды, сборка и парсинг клавиатуры.
+"""Pure morning-board logic: rows, keyboard assembly and parsing.
 
-Состояние доски нигде не хранится — оно закодировано в reply_markup самого
-сообщения: парсим текущую клавиатуру, применяем переключение, пересобираем.
-Так доска переживает рестарты бота и не требует отдельного хранилища.
+Board state is entirely encoded in the message reply_markup — parse the current
+keyboard, apply a toggle, rebuild. This survives bot restarts and needs no
+separate storage.
 """
 
 from dataclasses import dataclass
@@ -10,12 +10,11 @@ from dataclasses import dataclass
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-STATUS_X = "x"    # не ест / нет в школе → пустая клетка в Excel
-STATUS_O = "O"    # обед
-STATUS_O1 = "O1"  # обед с первым
+STATUS_X = "x"
+STATUS_O = "O"
+STATUS_O1 = "O1"
 
 EMOJI = {STATUS_X: "❌", STATUS_O: "✅", STATUS_O1: "🍜"}
-# порядок кнопок в ряду: ❌ | 🍜 | ✅
 ROW_ORDER = (STATUS_X, STATUS_O1, STATUS_O)
 
 ACTION_BY_STATUS = {STATUS_X: "x", STATUS_O: "O", STATUS_O1: "O1"}
@@ -23,8 +22,8 @@ STATUS_BY_ACTION = {v: k for k, v in ACTION_BY_STATUS.items()}
 
 
 class MealCB(CallbackData, prefix="m"):
-    date: str        # YYYY-MM-DD
-    student_id: int  # 0 = действия уровня дня (skip/restart/confirm)
+    date: str
+    student_id: int
     action: str
 
 
@@ -33,7 +32,7 @@ class Row:
     student_id: int
     name: str
     status: str = STATUS_X
-    locked: bool = False  # авто-пропуск: одна зажатая кнопка, без выбора
+    locked: bool = False
 
 
 def build_rows(
@@ -45,8 +44,7 @@ def build_rows(
 
 
 def build_keyboard(date_str: str, rows: list[Row], *, arm: str | None = None) -> InlineKeyboardMarkup:
-    """arm='restart' | 'confirm' — первый клик по опасной кнопке только взводит её:
-    ряды учеников не перерисовываются, отметки не теряются."""
+    """Build the inline-keyboard board. arm='restart'/'confirm' arms the safety button."""
     keyboard: list[list[InlineKeyboardButton]] = [
         [InlineKeyboardButton(
             text="❌ НЕ ЗАПИСЫВАТЬ ❌",
@@ -83,7 +81,6 @@ def build_keyboard(date_str: str, rows: list[Row], *, arm: str | None = None) ->
 
 
 def _student_button(date_str: str, row: Row, status: str) -> InlineKeyboardButton:
-    # имя «мигрирует» на выбранную кнопку, эмодзи остаётся справа от имени
     label = f"{row.name} {EMOJI[status]}" if status == row.status else EMOJI[status]
     return InlineKeyboardButton(
         text=label,
@@ -94,7 +91,7 @@ def _student_button(date_str: str, row: Row, status: str) -> InlineKeyboardButto
 
 
 def parse_keyboard(markup: InlineKeyboardMarkup | None) -> list[Row]:
-    """Восстановить ряды из reply_markup. ValueError — если это не наша доска."""
+    """Restore rows from a reply_markup; raises ValueError if not a meal board."""
     if markup is None:
         raise ValueError("no markup")
     rows: list[Row] = []
@@ -104,7 +101,7 @@ def parse_keyboard(markup: InlineKeyboardMarkup | None) -> list[Row]:
             continue
         head = MealCB.unpack(first.callback_data)
         if head.student_id == 0:
-            continue  # верхняя кнопка и рестарт/подтвердить
+            continue
         if len(line) == 1:
             rows.append(Row(head.student_id, _name(first.text), STATUS_X, locked=True))
             continue
@@ -123,7 +120,7 @@ def _name(label: str) -> str:
 
 
 def toggle(rows: list[Row], student_id: int, action: str) -> list[Row]:
-    """Выбор статуса; повторный клик по уже выбранной кнопке возвращает ❌."""
+    """Toggle a student's status; repeated click on the same button resets to X."""
     status = STATUS_BY_ACTION[action]
     for r in rows:
         if r.student_id == student_id and not r.locked:

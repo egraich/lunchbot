@@ -1,4 +1,4 @@
-"""Конфиг из .env + общие константы."""
+"""Config from .env and shared constants."""
 
 import logging
 import os
@@ -14,9 +14,10 @@ SUPERADMIN_IDS: frozenset[int] = frozenset(
     int(raw) for raw in os.getenv("SUPERADMIN_IDS", "").replace(" ", "").split(",") if raw
 )
 
-# VPS в Германии — всё время считаем по Минску
 TZ = ZoneInfo(os.getenv("TZ", "Europe/Minsk"))
-DB_PATH: str = os.getenv("DB_PATH", "meal_tracker.db")
+DATABASE_URL: str = os.getenv("DATABASE_URL", "")
+DB_POOL_MIN: int = int(os.getenv("DB_POOL_MIN", "1"))
+DB_POOL_MAX: int = int(os.getenv("DB_POOL_MAX", "5"))
 
 DEFAULT_MORNING_TIME = "07:40"
 DEFAULT_EXCEL_TIME = "16:00"

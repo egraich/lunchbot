@@ -1,4 +1,4 @@
-"""📅 Посмотреть записи: месяцы → календарь → день → правка задним числом."""
+"""View records: month calendar → day → edit past days."""
 
 import calendar
 import logging
@@ -53,10 +53,10 @@ async def history_month_screen(admin: Admin, year: int, month: int) -> tuple[str
     days_with_records = {day for (_sid, day) in recs}
 
     rows = [[btn(wd, "noop") for wd in WEEKDAYS_FULL]]
-    for week in calendar.monthcalendar(year, month):  # сетка пн-вс, как настенный календарь
+    for week in calendar.monthcalendar(year, month):
         row = []
         for day in week:
-            if day == 0:  # день соседнего месяца — заглушка, чтобы ряды не ехали
+            if day == 0:
                 row.append(btn("▪️", "noop"))
                 continue
             iso = f"{year:04d}-{month:02d}-{day:02d}"
@@ -130,7 +130,6 @@ async def cb_hist_edit(cb: CallbackQuery, callback_data: MCB, bot: Bot) -> None:
     if not await students.count_active(admin.school_id, admin.class_name):
         return await cb.answer("Сначала добавь учеников: /management → 🧑‍🎓.", show_alert=True)
     try:
-        # майские записи можно править и летом, а вот летние дни не откроются
         await board.send_board(bot, admin, date.fromisoformat(callback_data.arg))
     except SeasonClosed:
         return await cb.answer(VACATION_TEXT, show_alert=True)

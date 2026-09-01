@@ -1,10 +1,13 @@
 services:
-  meal-bot:
+  lunch-bot:
     build: .
-    container_name: meal-tracker
+    container_name: lunch-bot
     restart: unless-stopped
     env_file: .env
-    environment:
-      DB_PATH: /app/data/meal_tracker.db
-    volumes:
-      - ./data:/app/data
+    networks:
+      - postgres_net
+
+networks:
+  postgres_net:
+    external: true
+    name: postgres_net

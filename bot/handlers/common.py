@@ -1,4 +1,4 @@
-"""Общее для хендлеров админки: callback_data, состояния, клавиатурные хелперы."""
+"""Shared helpers for admin handlers: callback_data, states, keyboard utilities."""
 
 import re
 
@@ -51,7 +51,7 @@ async def guard(cb: CallbackQuery) -> Admin | None:
 
 
 async def edit(cb: CallbackQuery, text: str, markup: InlineKeyboardMarkup | None = None) -> None:
-    """Отредактировать сообщение меню; «not modified» не считаем ошибкой."""
+    """Edit the menu message; TelegramBadRequest (not modified) is silently ignored."""
     if cb.message is None:
         return
     try:
@@ -71,5 +71,5 @@ def parse_time(raw: str) -> str | None:
 
 
 def time_from_cb(raw: str) -> str:
-    """'0740' из callback_data → '07:40' (двоеточие в callback_data нельзя)."""
+    """Convert '0740' from callback_data to '07:40' (colons are not allowed in callback_data)."""
     return f"{raw[:2]}:{raw[2:]}"

@@ -1,4 +1,4 @@
-"""Утренняя доска: отправка, переключения, подтвердить/пропустить/рестарт."""
+"""Morning lunch board: send, toggle, confirm, skip, restart."""
 
 import logging
 from datetime import date, datetime
@@ -79,7 +79,7 @@ def _summary_keyboard(date_str: str) -> InlineKeyboardMarkup:
 
 
 async def _send_sheet(cb: CallbackQuery, admin: Admin, day: str) -> None:
-    """Сообщение «для листка»: класс + обеды с I и без I — переписать бездумно."""
+    """Send the day summary text for the class teacher."""
     try:
         recs = await records.for_day_class(admin.school_id, admin.class_name, day)
         await cb.message.answer(sheet_text(admin.class_name, recs))
@@ -88,9 +88,9 @@ async def _send_sheet(cb: CallbackQuery, admin: Admin, day: str) -> None:
 
 
 async def send_board(bot: Bot, admin: Admin, d: date) -> None:
-    """Отправить свежую доску и зарегистрировать её как сессию дня.
+    """Send a fresh board and register it as the day's session.
 
-    Летом доски закрыты для всех, кроме суперадмина (тесты/демо).
+    In summer, boards are closed for everyone except the superadmin.
     """
     if not is_school_season(d) and admin.telegram_id not in config.SUPERADMIN_IDS:
         raise SeasonClosed()
@@ -134,8 +134,6 @@ async def on_board(cb: CallbackQuery, callback_data: MealCB) -> None:
     if admin is None:
         return await cb.answer("Ты не админ этого бота.", show_alert=True)
 
-    # безопасность: доска принадлежит конкретной сессии; жать можно только
-    # админам ТОГО ЖЕ класса (например, запасному админу)
     session = await sessions.get_by_message(cb.message.chat.id, cb.message.message_id)
     if session is None:
         return await cb.answer("Доска устарела — открой заново: /today", show_alert=True)
@@ -143,8 +141,6 @@ async def on_board(cb: CallbackQuery, callback_data: MealCB) -> None:
     if owner is None or (owner.school_id, owner.class_name) != (admin.school_id, admin.class_name):
         return await cb.answer("Это доска другого класса 🤨", show_alert=True)
 
-    # доска работает с любой своей датой: и с сегодняшней, и с прошлой
-    # (открытие задним числом — через /management → Посмотреть записи)
     try:
         board_date = date.fromisoformat(callback_data.date)
     except ValueError:
@@ -152,12 +148,10 @@ async def on_board(cb: CallbackQuery, callback_data: MealCB) -> None:
 
     action = callback_data.action
 
-    # летом записи закрыты; правка прошлых учебных месяцев и листок — можно
-    if (action != "sheet" and not is_school_season(board_date)
-            and cb.from_user.id not in config.SUPERADMIN_IDS):
+    if action != "sheet" and not is_school_season(board_date) and cb.from_user.id not in config.SUPERADMIN_IDS:
         return await cb.answer("🏖 Лето! Записи откроются 1 сентября.", show_alert=True)
 
-    if action in STATUS_BY_ACTION:  # x / O / O1 — клик по кнопке ученика
+    if action in STATUS_BY_ACTION:
         try:
             rows = parse_keyboard(cb.message.reply_markup)
         except ValueError:
@@ -180,8 +174,6 @@ async def on_board(cb: CallbackQuery, callback_data: MealCB) -> None:
         except ValueError:
             return await cb.answer("Доска устарела — открой заново: /today", show_alert=True)
         if action == "restart" and any(r.status != STATUS_X for r in rows if not r.locked):
-            # защита от случайного тапа: первый клик только взводит кнопку,
-            # отметки остаются на местах
             try:
                 await cb.message.edit_reply_markup(
                     reply_markup=build_keyboard(callback_data.date, rows, arm="restart")
@@ -214,14 +206,13 @@ async def on_board(cb: CallbackQuery, callback_data: MealCB) -> None:
             return await cb.answer("Доска устарела — открой заново: /today", show_alert=True)
         statuses = {r.student_id: r.status for r in rows if r.status in (STATUS_O, STATUS_O1)}
         if action == "confirm" and not statuses:
-            # пустой день подтверждаем дважды — вдруг промахнулись
             try:
                 await cb.message.edit_reply_markup(
                     reply_markup=build_keyboard(callback_data.date, rows, arm="confirm")
                 )
             except TelegramBadRequest:
                 pass
-            return await cb.answer("Никто не отмечен ✅/🍜. Ещё раз — запишу день пустым.")
+            return await cb.answer("Никто не отмечен ✅/🍜. Ещё раз — запишу дeн пустым.")
         await records.replace_day([r.student_id for r in rows], callback_data.date, statuses)
         await sessions.set_status(cb.from_user.id, callback_data.date, "confirmed")
         try:
@@ -235,8 +226,6 @@ async def on_board(cb: CallbackQuery, callback_data: MealCB) -> None:
         return await cb.answer("Записано ✅")
 
     if action == "sheet":
-        # считаем по записям класса целиком (включая удалённых после еды),
-        # чтобы цифры всегда сходились с Excel
         recs = await records.for_day_class(admin.school_id, admin.class_name, callback_data.date)
         await cb.message.answer(sheet_text(admin.class_name, recs))
         return await cb.answer("Готово 📋")

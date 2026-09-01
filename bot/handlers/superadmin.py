@@ -1,8 +1,4 @@
-"""Команды суперадмина из .env: /add, /del, /admins, /schools.
-
-/add без аргументов открывает кнопочный сценарий: выбор существующей школы →
-Telegram ID → класс. Одной строкой тоже можно: /add 123456789 11-Б Гимназия.
-"""
+"""Superadmin commands: /add, /del, /admins, /schools."""
 
 import logging
 
@@ -27,9 +23,9 @@ class SACB(CallbackData, prefix="sa"):
 
 
 class SAState(StatesGroup):
-    attach_id = State()    # выбрали школу — вводим Telegram ID админа
-    attach_class = State() # вводим класс
-    manual = State()       # новая школа одной строкой: ID КЛАСС Школа
+    attach_id = State()
+    attach_class = State()
+    manual = State()
 
 
 def _is_super_id(user_id: int) -> bool:
@@ -53,7 +49,7 @@ def _done_text(is_new: bool, telegram_id: int, class_name: str, school: str) -> 
 
 
 async def _finish_add(message: Message, telegram_id: int, class_name: str, school: str, is_new: bool) -> None:
-    """Создаём настройки и пробуем сами поздороваться с новым админом."""
+    """Create settings and greet the new admin."""
     await settings.get(telegram_id)
     note = ""
     try:
@@ -65,7 +61,7 @@ async def _finish_add(message: Message, telegram_id: int, class_name: str, schoo
     except Exception:
         note = "\n⚠️ Написать ему пока нельзя — пусть нажмёт /start."
     try:
-        await setup_commands(message.bot)  # обновить меню команд у нового админа
+        await setup_commands(message.bot)
     except Exception:
         pass
     await message.answer(_done_text(is_new, telegram_id, class_name, school) + note)
@@ -76,7 +72,7 @@ async def cmd_add(message: Message, state: FSMContext) -> None:
     if not _is_super_id(message.from_user.id):
         return
     parts = (message.text or "").split(maxsplit=3)
-    if len(parts) >= 4:  # быстрый формат одной строкой
+    if len(parts) >= 4:
         try:
             telegram_id = int(parts[1])
         except ValueError:

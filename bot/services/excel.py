@@ -1,4 +1,4 @@
-"""Месячный xlsx-отчёт в формате бумажной таблицы классрука."""
+"""Monthly xlsx report matching the paper class register format."""
 
 import os
 import tempfile
@@ -18,7 +18,6 @@ MONTH_NAMES = (
     "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
 )
 
-# символы, запрещённые в названии листа Excel и опасные в имени файла
 _BAD_CHARS = "[]:*?/\\"
 
 
@@ -29,7 +28,7 @@ def _safe(value: str) -> str:
 
 
 def month_weekdays(year: int, month: int) -> list[date]:
-    """Все пн–пт месяца — колонки отчёта (выходных колонок нет, как на фото)."""
+    """Return Mon–Fri dates of the given month (report columns)."""
     d = date(year, month, 1)
     days: list[date] = []
     while d.month == month:
@@ -90,8 +89,7 @@ def generate(
 
 
 async def build_report(admin: Admin, year: int, month: int) -> Path | None:
-    """Собрать отчёт по классу админа во временный файл. None — если нет учеников."""
-    # удалённые посреди месяца ученики остаются в отчёте, если успели поесть
+    """Build a class report to a temp file; returns None if there are no students."""
     start = f"{year:04d}-{month:02d}-01"
     end = f"{year:04d}-{month:02d}-31"
     sts = await students.list_for_report(admin.school_id, admin.class_name, start, end)

@@ -1,4 +1,4 @@
-"""Тесты агрегата «для листка»."""
+"""Unit tests for the day-summary text for the class teacher."""
 
 from bot.services.sheet import sheet_text
 
@@ -13,7 +13,6 @@ def test_sheet_empty_day():
 
 
 def test_sheet_format_is_copy_friendly():
-    # никаких украшений: только класс, пустая строка и две строки с числами
     text = sheet_text("10-А", {7: "O1"})
     lines = text.splitlines()
     assert lines[0] == "10-А"
