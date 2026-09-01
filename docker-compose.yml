@@ -1,7 +1,7 @@
 services:
   lunch-bot:
     build: .
-    container_name: lunch-bot
+    container_name: lunchbot
     restart: unless-stopped
     env_file: .env
     networks:
