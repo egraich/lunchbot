@@ -119,16 +119,14 @@ async def move(student_id: int, direction: str) -> None:
         if index < 0 or not 0 <= other < len(rows):
             return
         await db.execute(
-            "UPDATE students SET position = CASE id WHEN $1 THEN $2 WHEN $3 THEN $4 END"
-            " WHERE id IN ($5, $6)",
+            "UPDATE students "
+            "SET position = CASE id WHEN $1::int THEN $2::int WHEN $3::int THEN $4::int END "
+            "WHERE id IN ($1, $3)",
             rows[index]["id"],
             rows[other]["position"],
             rows[other]["id"],
             rows[index]["position"],
-            rows[index]["id"],
-            rows[other]["id"],
         )
-
 
 async def auto_skip_ids(school_id: int, class_name: str, weekday: int) -> set[int]:
     """Return IDs of students set to auto-skip on a given weekday."""
