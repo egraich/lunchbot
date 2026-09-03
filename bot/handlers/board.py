@@ -148,8 +148,11 @@ async def on_board(cb: CallbackQuery, callback_data: MealCB) -> None:
 
     action = callback_data.action
 
-    if action != "sheet" and not is_school_season(board_date) and cb.from_user.id not in config.SUPERADMIN_IDS:
-        return await cb.answer("🏖 Лето! Записи откроются 1 сентября.", show_alert=True)
+    # Allow regular admins to edit past dates during school season
+    # (only superadmins can edit past dates in summer)
+    if action != "sheet" and not is_school_season(board_date):
+        if cb.from_user.id not in config.SUPERADMIN_IDS:
+            return await cb.answer("🏖 Лето! Записи откроются 1 сентября.", show_alert=True)
 
     if action in STATUS_BY_ACTION:
         try:
